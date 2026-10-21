@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="ru"><head><meta charset="utf-8"><title>Проверки курса</title>
+<style>body{font:15px/1.5 system-ui;margin:20px;background:#fff;color:#111} .ok{color:#2b8a3e} .bad{color:#c92a2a;font-weight:700}</style>
+<script>window.COURSE = { modules: [], glossary: [], games: [], genres: [] };</script>
+<script src="content/glossary.js"></script><script src="content/genres.js"></script><script src="content/games.js"></script>
+<script src="content/m01.js"></script><script src="content/m02.js"></script><script src="content/m03.js"></script>
+<script src="content/m04.js"></script><script src="content/m05.js"></script><script src="content/m06.js"></script>
+<script src="content/m07.js"></script><script src="content/m08.js"></script><script src="content/m09.js"></script>
+<script src="content/m10.js"></script><script src="tools.js"></script>
+</head><body><h1>Проверки курса</h1><ul id="out"></ul>
+<script>
+// Открыть двойным кликом: все строки должны быть зелёными.
+const out = document.getElementById('out'); let fails = 0;
+function check(name, cond) {
+  const li = document.createElement('li'); li.className = cond ? 'ok' : 'bad';
+  li.textContent = (cond ? '✓ ' : '✗ ') + name; out.appendChild(li); if (!cond) fails++;
+}
+const near = (a, b, eps = 1e-6) => Math.abs(a - b) <= eps * Math.max(1, Math.abs(b));
+
+// --- Калькулятор ---
+const base = { mode: 'dau', dau: 1000, payerPct: 1, avgCheck: 150, devShare: 70, adsRobux: 500, rewardsRobux: 1000, rate: 0.0038, taxPct: 13 };
+let r = calcEconomy(base);
+check('платящих в день = DAU × доля', near(r.payersPerDay, 10));
+check('траты в день = платящие × чек', near(r.grossDaily, 1500));
+check('продажи за 30 дней × доля разработчика', near(r.salesMonth, 1500 * 30 * 0.7)); // 31 500
+check('итого Robux = продажи + реклама + Creator Rewards', near(r.totalR, 31500 + 500 + 1000));
+check('доллары = Robux × курс', near(r.usd, 33000 * 0.0038));
+check('после налога', near(r.usdAfterTax, 33000 * 0.0038 * 0.87));
+check('ARPDAU = доход в день / DAU', near(r.arpdauR, 33000 / 30 / 1000));
+check('дней до минимума DevEx', r.daysToDevex === Math.ceil(ECON.devexMin / 1100));
+check('нулевой доход → «никогда» до DevEx', calcEconomy({ ...base, payerPct: 0, adsRobux: 0, rewardsRobux: 0 }).daysToDevex === Infinity);
+
+// --- Удержание ---
+check('retention в узлах кривой', near(retentionAt(1, .2, .06, .02), .2) && near(retentionAt(7, .2, .06, .02), .06) && near(retentionAt(30, .2, .06, .02), .02));
+let mono = true; for (let d = 1; d < 180; d++) if (retentionAt(d + 1, .2, .06, .02) > retentionAt(d, .2, .06, .02) + 1e-12) mono = false;
+check('кривая удержания не растёт', mono);
+check('нулевое удержание → игрок живёт 1 день', near(lifetimeDays(0, 0, 0), 1, 1e-2));
+check('стопроцентное удержание → 180 дней', near(lifetimeDays(1, 1, 1), 180));
+const flow = calcEconomy({ ...base, mode: 'flow', newPerDay: 100, d1: 20, d7: 6, d30: 2 });
+check('DAU из притока = новые × срок жизни', near(flow.dau, 100 * lifetimeDays(.2, .06, .02)));
+check('LTV = доход в день / новых в день', near(flow.ltvR, flow.totalR / 30 / 100));
+
+// --- Контент ---
+const lessons = COURSE.modules.flatMap(m => m.lessons);
+check('модули 1–10 подключены по порядку', COURSE.modules.map(m => m.n).join() === '1,2,3,4,5,6,7,8,9,10');
+check('id уроков уникальны', new Set(lessons.map(l => l.id)).size === lessons.length);
+for (const l of lessons.filter(l => l.body)) {
+  check(`${l.id}: есть summary, источники, дата проверки`, l.summary?.length && l.sources?.length && /^\d{4}-\d{2}-\d{2}$/.test(l.verified));
+  check(`${l.id}: квиз 3–5 вопросов, в каждом ровно один верный ответ и объяснения`,
+    l.quiz && l.quiz.length >= 3 && l.quiz.length <= 5 && l.quiz.every(q => q.a.filter(a => a.ok).length === 1 && q.a.every(a => a.why)));
+  check(`${l.id}: ссылки источников — https`, l.sources.every(s => /^https:\/\//.test(s.url)));
+}
+check('у каждой игры есть ссылка на roblox.com', COURSE.games.every(g => /^https:\/\/www\.roblox\.com\/games\/\d+/.test(g.url)));
+check('id игр уникальны', new Set(COURSE.games.map(g => g.id)).size === COURSE.games.length);
+check('жанры: оценки 1–5', COURSE.genres.every(g => [g.diff, g.money, g.comp].every(n => n >= 1 && n <= 5)));
+check('глоссарий: термины уникальны', new Set(COURSE.glossary.map(g => g.term)).size === COURSE.glossary.length);
+
+const h = document.createElement('h2'); h.className = fails ? 'bad' : 'ok';
+h.textContent = fails ? `Провалено: ${fails}` : 'Все проверки пройдены'; document.body.insertBefore(h, out);
+</script></body></html>

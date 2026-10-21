@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Геймдев на Roblox: от идеи до денег</title>
+<link rel="stylesheet" href="style.css">
+<script>
+  // Тема применяется до отрисовки, чтобы не мигало
+  try { var t = JSON.parse(localStorage.getItem('rbx-course-v1') || '{}').theme; if (t) document.documentElement.dataset.theme = t; } catch (e) {}
+  window.COURSE = { modules: [], glossary: [], games: [], genres: [] };
+</script>
+</head>
+<body>
+<header class="top">
+  <button class="icon-btn" id="menu-btn" aria-label="Меню">☰</button>
+  <a href="#/" class="brand">Геймдев на Roblox</a>
+  <div class="top-progress" title="Пройдено уроков"><div class="bar"><i id="top-bar"></i></div><span id="top-pct">0%</span></div>
+  <button class="icon-btn" id="theme-btn" aria-label="Сменить тему">◐</button>
+</header>
+<div class="layout">
+  <nav id="sidebar" class="sidebar" aria-label="Содержание"></nav>
+  <main id="app" class="main" tabindex="-1"></main>
+</div>
+<div id="gl-pop" class="gl-pop" role="tooltip" hidden></div>
+
+<!-- Контент: порядок подключения = порядок модулей -->
+<script src="content/glossary.js"></script>
+<script src="content/genres.js"></script>
+<script src="content/games.js"></script>
+<script src="content/m01.js"></script>
+<script src="content/m02.js"></script>
+<script src="content/m03.js"></script>
+<script src="content/m04.js"></script>
+<script src="content/m05.js"></script>
+<script src="content/m06.js"></script>
+<script src="content/m07.js"></script>
+<script src="content/m08.js"></script>
+<script src="content/m09.js"></script>
+<script src="content/m10.js"></script>
+
+<script src="tools.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
