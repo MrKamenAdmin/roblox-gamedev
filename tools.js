@@ -7,6 +7,7 @@ const ECON = {
   devexRate: 0.0038,  // $ за 1 Robux по DevEx
   devShare: 70,       // % от продажи Game Pass / Developer Product, который получает разработчик
   devexMin: 30000,    // минимум Robux для заявки на DevEx
+  creditRobux: 263,   // Robux за 1 ad credit (≈ $1), с сентября 2025
 };
 
 // Кривая удержания: степенная интерполяция между D1, D7, D30 (доли 0..1),
@@ -42,6 +43,27 @@ function calcEconomy(i) {
   };
 }
 
+// Рекламный бюджет: воронка «бюджет → запуски → платящие → доход» и окупаемость.
+// ponytail: не учитывает органический прирост после рекламы и Creator Rewards — только прямую окупаемость.
+function calcAds(i) {
+  const plays = i.cpp ? i.adBudget / i.cpp : 0;
+  const payers = plays * i.adPayerPct / 100;
+  const grossR = payers * i.adSpend;                    // сколько Robux потратят рекламные игроки
+  const revenueR = grossR * i.devShare / 100;           // ваша доля
+  const revenueUsd = revenueR * i.rate;
+  const usdPerPayerPct = plays * i.adSpend * i.devShare / 100 * i.rate / 100; // доход за каждый 1% платящих
+  return {
+    plays, payers, grossR, revenueR, revenueUsd,
+    d1Back: plays * i.adD1 / 100,
+    cppRobux: i.cpp * ECON.creditRobux,
+    budgetRobux: i.adBudget * ECON.creditRobux,
+    roas: i.adBudget ? revenueUsd / i.adBudget * 100 : 0,
+    breakEvenCpp: plays ? revenueUsd / plays : 0,                     // при таком CPP реклама выходит в ноль
+    breakEvenPayerPct: usdPerPayerPct ? i.adBudget / usdPerPayerPct : Infinity,
+  };
+}
+
+// [ключ, подпись, по умолчанию, допущение, режимы] — режимы: dau, flow, ads; без режима = dau и flow
 const CALC_FIELDS = [
   ['dau', 'DAU — уникальных игроков в день', 1000, 'Для новой игры без рекламы реалистичны десятки–сотни. Тысячи DAU — уже заметный успех.', 'dau'],
   ['newPerDay', 'Новых игроков в день', 300, 'Сколько людей впервые заходят в игру за день (из рекомендаций, рекламы, соцсетей).', 'flow'],
@@ -50,23 +72,30 @@ const CALC_FIELDS = [
   ['d30', 'D30 retention, %', 2, 'Доля вернувшихся на 30-й день.', 'flow'],
   ['payerPct', 'Доля платящих среди DAU в день, %', 1, 'Сколько из дневных игроков совершают хотя бы одну покупку в этот день. Точных публичных бенчмарков нет; используйте свои данные.'],
   ['avgCheck', 'Средний чек платящего в день, Robux', 150, 'Сколько Robux в среднем тратит платящий игрок за день (сумма всех покупок).'],
-  ['devShare', 'Доля разработчика с продаж, %', ECON.devShare, 'С Game Pass и Developer Product разработчик получает 70%, остальное — комиссия платформы.'],
+  ['adBudget', 'Рекламный бюджет, $ (= ad credits)', 20, '1 ad credit ≈ $1 ≈ 263 R$. Минимум кампании — 10 кредитов на 2 дня. Стартовый тест из урока 6.5 — $10–20.', 'ads'],
+  ['cpp', 'CPP — цена одного запуска, $', 0.0073, 'Официальный средний CPP для цели Plays — $0,0073 (ноябрь 2025). У разработчиков — от $0,002 до $0,15, часто $0,01–0,02. Слабое превью и узкий таргетинг поднимают CPP.', 'ads'],
+  ['adD1', 'D1 рекламных игроков, %', 3, 'По отчётам разработчиков, у пришедших из рекламы D1 ≈ 3%, у органических 5–9%. Сильная первая минута поднимает эту цифру.', 'ads'],
+  ['adPayerPct', 'Доля рекламных игроков, которые хоть раз заплатят, %', 1, 'Публичных бенчмарков нет. 1% — осторожная оценка; возьмите свою конверсию из аналитики.', 'ads'],
+  ['adSpend', 'Сколько платящий потратит за всё время, Robux', 150, 'Сумма всех покупок одного платящего игрока. Ориентир — ARPPU в вашей аналитике.', 'ads'],
+  ['devShare', 'Доля разработчика с продаж, %', ECON.devShare, 'С Game Pass и Developer Product разработчик получает 70%, остальное — комиссия платформы.', 'dau flow ads'],
   ['adsRobux', 'Доход от рекламы, Robux/мес', 0, 'Rewarded- и immersive-реклама. Зависит от показов и региона аудитории — вводите свою оценку.'],
   ['rewardsRobux', 'Creator Rewards, Robux/мес', 0, 'Грубо: 5 R$ в день за каждого Active Spender (тратил от $9,99 за 60 дней), для которого ваша игра — одна из первых трёх за день, плюс 35% трат приведённых новичков. Урок 1.3.'],
-  ['rate', 'Курс DevEx, $ за 1 Robux', ECON.devexRate, 'Официальный курс обмена заработанных Robux на доллары.'],
+  ['rate', 'Курс DevEx, $ за 1 Robux', ECON.devexRate, 'Официальный курс обмена заработанных Robux на доллары.', 'dau flow ads'],
   ['taxPct', 'Налог, %', 13, 'Для налогового резидента РФ — НДФЛ с иностранного дохода (см. урок 9.4). Не налоговая консультация.'],
 ];
 
-function toolCalc(el) {
+function toolCalc(el, params) {
   const st = S.calc = S.calc || {};
+  if (params?.get('mode')) st.mode = params.get('mode');
   const v = k => st[k] ?? CALC_FIELDS.find(f => f[0] === k)[2];
   const fmt = (n, d = 0) => Number.isFinite(n) ? n.toLocaleString('ru-RU', { maximumFractionDigits: d }) : '—';
   const mode = st.mode || 'dau';
   el.innerHTML = `<h1>Калькулятор экономики игры</h1>
-  <p class="muted">Грубая оценка дохода. Под каждым полем — допущение. Модель считает 30 дней и не учитывает возвраты, сезонность и рекламные расходы.</p>
+  <p class="muted">${mode === 'ads' ? 'Окупится ли реклама в Ads Manager: воронка от бюджета до покупок. Под каждым полем — допущение; цифры и источники — в <a href="#/lesson/m6-5">уроке 6.5</a>.'
+    : 'Грубая оценка дохода. Под каждым полем — допущение. Модель считает 30 дней и не учитывает возвраты, сезонность и рекламные расходы.'}</p>
   <div class="calc"><div>
-    <div class="seg" id="mode"><button data-m="dau" class="${mode === 'dau' ? 'on' : ''}">Знаю DAU</button><button data-m="flow" class="${mode === 'flow' ? 'on' : ''}">Считать из притока и retention</button></div>
-    ${CALC_FIELDS.filter(f => !f[4] || f[4] === mode).map(([k, label, , hint]) => `
+    <div class="seg" id="mode"><button data-m="dau" class="${mode === 'dau' ? 'on' : ''}">Знаю DAU</button><button data-m="flow" class="${mode === 'flow' ? 'on' : ''}">Считать из притока и retention</button><button data-m="ads" class="${mode === 'ads' ? 'on' : ''}">Рекламный бюджет</button></div>
+    ${CALC_FIELDS.filter(f => (f[4] || 'dau flow').split(' ').includes(mode)).map(([k, label, , hint]) => `
       <label class="f" for="c-${k}">${label}</label>
       <input type="number" min="0" step="any" id="c-${k}" data-k="${k}" value="${v(k)}">
       <div class="hint">${hint}</div>`).join('')}
@@ -75,6 +104,7 @@ function toolCalc(el) {
 
   const out = () => {
     const inp = { mode }; CALC_FIELDS.forEach(f => { inp[f[0]] = +v(f[0]) || 0; });
+    if (mode === 'ads') return outAds(inp);
     const r = calcEconomy(inp);
     $('#c-out').innerHTML = `<div class="muted small">Доход разработчика за 30 дней</div>
       <div class="big">${fmt(r.totalR)} R$</div><div class="big" style="font-size:1.3rem">≈ $${fmt(r.usd)}</div>
@@ -90,6 +120,25 @@ function toolCalc(el) {
       ${r.ltvR !== null ? `<div class="kv"><span>Доход на одного нового игрока (LTV)</span><b>${fmt(r.ltvR, 2)} R$</b></div>` : ''}
       <div class="kv"><span>До минимума DevEx (${fmt(ECON.devexMin)} R$)</span><b>${Number.isFinite(r.daysToDevex) ? fmt(r.daysToDevex) + ' дн.' : 'никогда'}</b></div>
       <p class="hint" style="margin-top:12px">Robux от продаж поступают не сразу (есть период ожидания), а налоговые и банковские расходы зависят от страны — см. урок 1.3.</p>`;
+  };
+  const outAds = inp => {
+    const r = calcAds(inp), ok = r.roas >= 100;
+    $('#c-out').innerHTML = `<div class="muted small">Окупаемость рекламы (ROAS)</div>
+      <div class="big" style="color:var(${ok ? '--ok' : '--bad'})">${fmt(r.roas)}%</div>
+      <div class="muted small">вернётся ≈ $${fmt(r.revenueUsd, 2)} (${fmt(r.revenueR)} R$) из $${fmt(inp.adBudget, 2)} (${fmt(r.budgetRobux)} R$)</div>
+      <h3>Воронка</h3>
+      <div class="kv"><span>Запусков из рекламы</span><b>${fmt(r.plays)}</b></div>
+      <div class="kv"><span>Цена запуска</span><b>${fmt(r.cppRobux, 2)} R$</b></div>
+      <div class="kv"><span>Вернутся на следующий день</span><b>${fmt(r.d1Back)}</b></div>
+      <div class="kv"><span>Станут платящими</span><b>${fmt(r.payers, 1)}</b></div>
+      <div class="kv"><span>Потратят всего</span><b>${fmt(r.grossR)} R$</b></div>
+      <div class="kv"><span>Ваша доля (${fmt(inp.devShare)}%)</span><b>${fmt(r.revenueR)} R$</b></div>
+      <h3>Чтобы выйти в ноль</h3>
+      <div class="kv"><span>CPP не выше</span><b>$${fmt(r.breakEvenCpp, 4)}</b></div>
+      <div class="kv"><span>или доля платящих не ниже</span><b>${Number.isFinite(r.breakEvenPayerPct) ? fmt(r.breakEvenPayerPct, 2) + '%' : '—'}</b></div>
+      <p class="hint" style="margin-top:12px">${ok ? 'Кампания окупается напрямую. Масштабируйте постепенно и следите за D1 рекламных игроков.'
+        : 'Прямой окупаемости нет — для небольшого теста это нормально: вы покупаете данные о первой минуте и удержании. Масштабируйте только то, что окупается.'}
+      Модель не учитывает органический рост после рекламы, Creator Rewards и задержку выплат; игроки из рекламы не влияют на рекомендации (урок 6.2).</p>`;
   };
   el.querySelector('#mode').onclick = e => { const m = e.target.dataset.m; if (m) { st.mode = m; save(); toolCalc(el); } };
   el.querySelector('#c-reset').onclick = () => { S.calc = { mode }; save(); toolCalc(el); };

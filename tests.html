@@ -30,6 +30,15 @@ check('ARPDAU = доход в день / DAU', near(r.arpdauR, 33000 / 30 / 1000
 check('дней до минимума DevEx', r.daysToDevex === Math.ceil(ECON.devexMin / 1100));
 check('нулевой доход → «никогда» до DevEx', calcEconomy({ ...base, payerPct: 0, adsRobux: 0, rewardsRobux: 0 }).daysToDevex === Infinity);
 
+// --- Рекламный бюджет ---
+const ad = calcAds({ adBudget: 20, cpp: 0.0073, adD1: 3, adPayerPct: 1, adSpend: 150, devShare: 70, rate: 0.0038 });
+check('реклама: запуски = бюджет / CPP', near(ad.plays, 20 / 0.0073));
+check('реклама: доход = запуски × платящие × траты × доля × курс', near(ad.revenueUsd, 20 / 0.0073 * 0.01 * 150 * 0.7 * 0.0038));
+check('реклама: ROAS = доход / бюджет', near(ad.roas, ad.revenueUsd / 20 * 100));
+check('реклама: при CPP выхода в ноль ROAS = 100%', near(calcAds({ adBudget: 20, cpp: ad.breakEvenCpp, adD1: 3, adPayerPct: 1, adSpend: 150, devShare: 70, rate: 0.0038 }).roas, 100));
+check('реклама: при доле платящих выхода в ноль ROAS = 100%', near(calcAds({ adBudget: 20, cpp: 0.0073, adD1: 3, adPayerPct: ad.breakEvenPayerPct, adSpend: 150, devShare: 70, rate: 0.0038 }).roas, 100));
+check('реклама: нулевой CPP не ломает расчёт', calcAds({ adBudget: 20, cpp: 0, adD1: 3, adPayerPct: 1, adSpend: 150, devShare: 70, rate: 0.0038 }).plays === 0);
+
 // --- Удержание ---
 check('retention в узлах кривой', near(retentionAt(1, .2, .06, .02), .2) && near(retentionAt(7, .2, .06, .02), .06) && near(retentionAt(30, .2, .06, .02), .02));
 let mono = true; for (let d = 1; d < 180; d++) if (retentionAt(d + 1, .2, .06, .02) > retentionAt(d, .2, .06, .02) + 1e-12) mono = false;
