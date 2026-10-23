@@ -178,3 +178,5 @@ dl.glossary dd { margin: 2px 0 0; }
 .game dt { font-weight: 600; color: var(--muted); font-size: .78rem; text-transform: uppercase; letter-spacing: .03em; margin-top: 8px; }
 .game dd { margin: 0; }
 .genres td:last-child { min-width: 280px; }
+.mini { height: 6px; background: var(--surface-2); border-radius: 99px; overflow: hidden; margin: 3px 0; min-width: 90px; }
+.mini i { display: block; height: 100%; background: var(--accent); }

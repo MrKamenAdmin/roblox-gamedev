@@ -106,7 +106,9 @@ function toolGenres(el) {
   const sel = (k, label, opts) => `<label>${label}<select data-f="${k}"><option value="">любая</option>${opts.map(([v, t]) =>
     `<option value="${v}" ${String(f[k] ?? '') === String(v) ? 'selected' : ''}>${t}</option>`).join('')}</select></label>`;
   const n15 = [1, 2, 3, 4, 5].map(n => [n, n]);
-  let rows = COURSE.genres.filter(g =>
+  const st = COURSE.genreStats?.rows || {};
+  const max = Math.max(1, ...Object.values(st).map(r => r.ccu));
+  let rows = COURSE.genres.map(g => ({ ...g, ccu: st[g.name]?.ccu ?? -1 })).filter(g =>
     (!f.diff || g.diff <= f.diff) && (!f.team || g.teamMin <= f.team) && (!f.age || g.age.includes(f.age)) &&
     (!f.money || g.money >= f.money) && (!f.comp || g.comp <= f.comp));
   rows.sort((a, b) => (a[f.sort] > b[f.sort] ? 1 : a[f.sort] < b[f.sort] ? -1 : 0) * f.dir);
@@ -117,13 +119,37 @@ function toolGenres(el) {
     ${sel('diff', 'Сложность не выше', n15)}${sel('team', 'Команда не больше (чел.)', [[1, 1], [2, 2], [3, 3], [5, 5]])}
     ${sel('age', 'Возраст аудитории', AGES.map(a => [a, a]))}${sel('money', 'Монетизация не ниже', n15)}${sel('comp', 'Конкуренция не выше', n15)}
   </div>
-  <div class="table-wrap genres"><table><thead><tr>${th('name', 'Жанр')}${th('diff', 'Сложность')}${th('teamMin', 'Команда')}<th>Возраст</th>${th('money', 'Монетизация')}${th('comp', 'Конкуренция')}<th>Core loop и примеры</th></tr></thead>
-  <tbody>${rows.map(g => `<tr><td><b>${esc(g.name)}</b></td><td>${dots(g.diff)}</td><td>${esc(g.team)}</td><td class="small">${g.age.join(', ')}</td>
+  <div class="table-wrap genres"><table><thead><tr>${th('name', 'Жанр')}${th('ccu', 'Онлайн сейчас')}${th('diff', 'Сложность')}${th('teamMin', 'Команда')}<th>Возраст</th>${th('money', 'Монетизация')}${th('comp', 'Конкуренция')}<th>Core loop и примеры</th></tr></thead>
+  <tbody>${rows.map(g => `<tr><td><b>${esc(g.name)}</b>${st[g.name] ? `<div class="small muted">Roblox: ${esc(st[g.name].official)}</div>` : ''}</td><td class="small">${ccuCell(st[g.name], max)}</td><td>${dots(g.diff)}</td><td>${esc(g.team)}</td><td class="small">${g.age.join(', ')}</td>
     <td>${dots(g.money)}</td><td>${dots(g.comp)}</td><td class="small">${esc(g.loop)}<br><span class="muted">${esc(g.examples)}</span>
-    ${g.note ? `<br><i>${esc(g.note)}</i>` : ''}</td></tr>`).join('') || '<tr><td colspan="7">Под фильтры ничего не подходит.</td></tr>'}</tbody></table></div>
-  <p class="small muted">Найдено: ${rows.length} из ${COURSE.genres.length}. Подробно о жанрах — в модуле 2.</p>`;
+    ${g.note ? `<br><i>${esc(g.note)}</i>` : ''}</td></tr>`).join('') || '<tr><td colspan="8">Под фильтры ничего не подходит.</td></tr>'}</tbody></table></div>
+  <p class="small muted">Найдено: ${rows.length} из ${COURSE.genres.length}. Подробно о жанрах — в модуле 2.</p>
+  ${genreStatsNote()}`;
   el.onchange = e => { const k = e.target.dataset.f; if (k) { f[k] = e.target.value && (k === 'age' ? e.target.value : +e.target.value); save(); toolGenres(el); } };
-  el.onclick = e => { const k = e.target.closest('th')?.dataset.sort; if (k) { f.dir = f.sort === k ? -f.dir : 1; f.sort = k; save(); toolGenres(el); } };
+  el.onclick = e => { const k = e.target.closest('th')?.dataset.sort; if (k) { f.dir = f.sort === k ? -f.dir : k === 'ccu' ? -1 : 1; f.sort = k; save(); toolGenres(el); } };
+}
+
+// Онлайн по жанрам: снимок из content/genre-stats.js (обновляется scripts/genre_stats.py)
+const fmtCcu = n => n >= 1e6 ? (n / 1e6).toLocaleString('ru-RU', { maximumFractionDigits: 1 }) + ' млн'
+  : n >= 1e3 ? Math.round(n / 1e3) + ' тыс.' : String(n);
+function ccuCell(s, max) {
+  if (!s) return '—';
+  const lead = s.top[0];
+  return `<b>${fmtCcu(s.ccu)}</b><div class="mini"><i style="width:${(s.ccu / max * 100).toFixed(1)}%"></i></div>
+    ${s.games} игр в чартах${lead ? ` · лидер забирает ${Math.round(lead[1] / s.ccu * 100)}%` : ''}
+    <div class="muted">${s.top.slice(0, 2).map(([n, c, p]) => `<a href="https://www.roblox.com/games/${p}" target="_blank" rel="noopener">${esc(n)}</a> ${fmtCcu(c)}`).join(', ')}</div>`;
+}
+function genreStatsNote() {
+  const gs = COURSE.genreStats;
+  if (!gs) return '';
+  return `<div class="note fact"><b>Откуда «Онлайн сейчас».</b> Снимок ${esc(gs.date)}: все игры из чартов Roblox (Top Playing Now, Trending, Top Earning, жанровые и др.) для телефонов, планшетов, ПК и консолей —
+    ${gs.sampleGames.toLocaleString('ru-RU')} игр, ${fmtCcu(gs.sampleCcu)} игроков одновременно. Онлайн и жанр каждой игры взяты из официального API Roblox и сложены по жанрам карты.</div>
+  <div class="note warn">Как читать: это не вся платформа, а игры, попавшие в чарты (на них приходится основная часть онлайна).
+    Официальные жанры Roblox не совпадают с жанрами курса один в один — под названием жанра указано, что именно сложено.
+    «Трендовые» — не жанр, а игры младше 90 дней; они же входят и в свои жанры (Steal An Egg — это Tycoon).
+    Онлайн сильно меняется по часам и дням недели, а на снимок пришлись хеллоуинские ивенты.
+    Колонка «лидер забирает» показывает концентрацию: чем выше процент, тем сильнее жанр держится на одной игре.</div>
+  <p class="small muted">Не вошло в карту: ${gs.other.slice(0, 6).map(([n, c]) => `${esc(n)} ${fmtCcu(c)}`).join(' · ')}.</p>`;
 }
 
 // ================= Разборы игр =================

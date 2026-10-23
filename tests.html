@@ -2,7 +2,7 @@
 <html lang="ru"><head><meta charset="utf-8"><title>Проверки курса</title>
 <style>body{font:15px/1.5 system-ui;margin:20px;background:#fff;color:#111} .ok{color:#2b8a3e} .bad{color:#c92a2a;font-weight:700}</style>
 <script>window.COURSE = { modules: [], glossary: [], games: [], genres: [] };</script>
-<script src="content/glossary.js"></script><script src="content/genres.js"></script><script src="content/games.js"></script>
+<script src="content/glossary.js"></script><script src="content/genres.js"></script><script src="content/games.js"></script><script src="content/genre-stats.js"></script>
 <script src="content/m01.js"></script><script src="content/m02.js"></script><script src="content/m03.js"></script>
 <script src="content/m04.js"></script><script src="content/m05.js"></script><script src="content/m06.js"></script>
 <script src="content/m07.js"></script><script src="content/m08.js"></script><script src="content/m09.js"></script>
@@ -53,6 +53,8 @@ for (const l of lessons.filter(l => l.body)) {
 check('у каждой игры есть ссылка на roblox.com', COURSE.games.every(g => /^https:\/\/www\.roblox\.com\/games\/\d+/.test(g.url)));
 check('id игр уникальны', new Set(COURSE.games.map(g => g.id)).size === COURSE.games.length);
 check('жанры: оценки 1–5', COURSE.genres.every(g => [g.diff, g.money, g.comp].every(n => n >= 1 && n <= 5)));
+check('онлайн по жанрам: есть для каждого жанра карты', COURSE.genres.every(g => COURSE.genreStats.rows[g.name]?.ccu > 0));
+check('онлайн по жанрам: сумма жанров (без трендов) не больше выборки', Object.entries(COURSE.genreStats.rows).filter(([k]) => k !== 'Трендовые вирусные игры').reduce((a, [, r]) => a + r.ccu, 0) <= COURSE.genreStats.sampleCcu);
 check('глоссарий: термины уникальны', new Set(COURSE.glossary.map(g => g.term)).size === COURSE.glossary.length);
 
 const h = document.createElement('h2'); h.className = fails ? 'bad' : 'ok';
