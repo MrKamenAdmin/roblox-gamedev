@@ -110,10 +110,10 @@ th.sortable::after { content: " ↕"; color: var(--muted); font-size: .8em; }
 
 /* Столбики (простые диаграммы) */
 .bars { margin: 14px 0; }
-.bars .b { display: grid; grid-template-columns: 9em 1fr 4.5em; gap: 8px; align-items: center; font-size: .9rem; margin: 5px 0; }
+.bars .b { display: grid; grid-template-columns: 9em 1fr 6.5em; gap: 8px; align-items: center; font-size: .9rem; margin: 5px 0; }
 .bars .b div { height: 14px; background: var(--surface-2); border-radius: 99px; overflow: hidden; }
 .bars .b div i { display: block; height: 100%; background: var(--accent); }
-.bars .b span:last-child { text-align: right; font-variant-numeric: tabular-nums; }
+.bars .b span:last-child { white-space: nowrap; text-align: right; font-variant-numeric: tabular-nums; }
 
 /* Урок */
 .crumbs { font-size: .85rem; color: var(--muted); }

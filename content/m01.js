@@ -333,11 +333,36 @@ COURSE.modules.push({
       body: `
 <p>В новостях пишут о миллионах долларов у создателей хитов. Чтобы адекватно ставить себе цели, полезно смотреть на <b>медиану</b>, а не на рекорды.</p>
 
-<h2>Большие цифры</h2>
+<h2>Сколько Roblox выплачивает создателям</h2>
+<p>В отчётности Roblox это строка <b>Developer exchange fees</b> — сколько долларов создатели получили, обменяв заработанные Robux через DevEx.</p>
+<div class="bars">
+  <div class="b"><span>2018</span><div><i style="width:4.8%"></i></div><span>$72 млн</span></div>
+  <div class="b"><span>2019</span><div><i style="width:7.5%"></i></div><span>$112 млн</span></div>
+  <div class="b"><span>2020</span><div><i style="width:21.9%"></i></div><span>$329 млн</span></div>
+  <div class="b"><span>2021</span><div><i style="width:35.8%"></i></div><span>$538 млн</span></div>
+  <div class="b"><span>2022</span><div><i style="width:41.5%"></i></div><span>$624 млн</span></div>
+  <div class="b"><span>2023</span><div><i style="width:49.3%"></i></div><span>$741 млн</span></div>
+  <div class="b"><span>2024</span><div><i style="width:61.4%"></i></div><span>$923 млн</span></div>
+  <div class="b"><span>2025</span><div><i style="width:100%"></i></div><span>$1,5 млрд</span></div>
+  <div class="b"><span>1-е полугодие 2026</span><div><i style="width:52.3%"></i></div><span>$786 млн</span></div>
+</div>
+<div class="table-wrap"><table>
+<tr><th>Период</th><th>Выплаты</th><th>Рост за год</th><th>Что повлияло</th></tr>
+<tr><td>2019</td><td>$112,0 млн</td><td>+56%</td><td>Рост трат игроков</td></tr>
+<tr><td>2020</td><td>$328,7 млн</td><td>+194%</td><td>Резкий рост bookings в год пандемии</td></tr>
+<tr><td>2021</td><td>$538,3 млн</td><td>+64%</td><td>Рост bookings и выплат за Premium-игроков</td></tr>
+<tr><td>2022</td><td>$623,9 млн</td><td>+16%</td><td>Замедление после пандемии</td></tr>
+<tr><td>2023</td><td>$740,8 млн</td><td>+19%</td><td>—</td></tr>
+<tr><td>2024</td><td>$922,8 млн</td><td>+25%</td><td>—</td></tr>
+<tr><td>2025</td><td><b>$1,503 млрд</b></td><td>+63%</td><td>Региональные цены Robux, Creator Rewards (июль), курс DevEx +8,5% (сентябрь)</td></tr>
+<tr><td>1-й кв. 2026</td><td>$423 млн</td><td>+50%</td><td>Повышенный курс DevEx</td></tr>
+<tr><td>2-й кв. 2026</td><td>$363 млн</td><td>+15%</td><td>Рост замедлился вместе с bookings</td></tr>
+</table></div>
+<p class="small muted">Источники — годовые отчёты Roblox для SEC (S-1 и 10-K) и письма акционерам за 2026 год. Пояснения в последней колонке — в основном из этих же отчётов. С 2018 по середину 2026 года набралось около $5,6 млрд; Roblox говорит о «более $5 млрд с 2013 года». Отчёт за 3-й квартал 2026 выйдет 29 октября.</p>
+
+<h2>Кому достаются эти деньги</h2>
 <div class="table-wrap"><table>
 <tr><th>Показатель</th><th>Значение</th></tr>
-<tr><td>Выплаты по DevEx за 2024 год</td><td>$922,8 млн</td></tr>
-<tr><td>Выплаты по DevEx за 2025 год</td><td><b>$1,503 млрд</b> (+63%)</td></tr>
 <tr><td>Создателей, получивших деньги через DevEx (12 месяцев до 30.06.2026)</td><td>более 42 000</td></tr>
 <tr><td><b>Медианный</b> доход такого создателя за год</td><td><b>≈ $1 500</b></td></tr>
 <tr><td>Средний доход создателей из топ-1000 за 2025 год</td><td>≈ $1,3 млн</td></tr>
@@ -380,7 +405,7 @@ COURSE.modules.push({
         ],
       },
       summary: [
-        'В 2025 году Roblox выплатил создателям через DevEx около $1,5 млрд.',
+        'Выплаты создателям росли каждый год: с $72 млн в 2018 до $1,5 млрд в 2025-м (в 20 раз).',
         'Но медианный создатель, получивший выплату, заработал около $1 500 за год.',
         'Доходы распределены по принципу «победитель получает почти всё»: средняя цифра обманчива.',
         'Первая игра — обучение. Реалистичная цель — релиз, данные и первые 30 000 R$.',
@@ -408,6 +433,11 @@ COURSE.modules.push({
       sources: [
         { title: 'Roblox Newsroom — Global impact of creation on Roblox (сентябрь 2026)', url: 'https://about.roblox.com/newsroom/2026/09/global-impact-of-creation-on-roblox' },
         { title: 'Roblox Q4 2025 shareholder letter (SEC)', url: 'https://www.sec.gov/Archives/edgar/data/1315098/000131509826000009/ex991-q42025shareholder.htm' },
+        { title: 'Roblox S-1/A, февраль 2021 (DevEx за 2018–2019, SEC)', url: 'https://www.sec.gov/Archives/edgar/data/1315098/000119312521038726/d87104ds1a.htm' },
+        { title: 'Roblox 10-K за 2021 год (DevEx за 2020–2021, SEC)', url: 'https://www.sec.gov/Archives/edgar/data/1315098/000131509822000058/rblx-20211231.htm' },
+        { title: 'Roblox 10-K за 2023 год (DevEx за 2022–2023, SEC)', url: 'https://www.sec.gov/Archives/edgar/data/1315098/000131509824000026/rblx-20231231.htm' },
+        { title: 'Roblox 10-K за 2025 год (DevEx за 2024–2025, SEC)', url: 'https://www.sec.gov/Archives/edgar/data/1315098/000131509826000024/rblx-20251231.htm' },
+        { title: 'Roblox Q1 2026 shareholder letter (SEC)', url: 'https://www.sec.gov/Archives/edgar/data/0001315098/000162828026028882/ex991-q12026earningsshar.htm' },
         { title: 'Roblox Q2 2026 shareholder letter (SEC)', url: 'https://www.sec.gov/Archives/edgar/data/0001315098/000162828026051059/ex991-robloxq22026earnin.htm' },
         { title: 'Roblox IR — вклад создателей в экономику США за 2025', url: 'https://ir.roblox.com/news/news-details/2026/Roblox-Creators-Added-752-Million-to-the-U-S--Economy-in-2025-a-69-Increase-From-2024/default.aspx' },
         { title: 'Roblox Charts', url: 'https://www.roblox.com/charts' },
